@@ -50,8 +50,7 @@ if err != nil {
 #### Cancel order
 
 ```golang
-txHash, err := paymentHandler.CancelOrder(
-	ctx context.Context,
+txHash, err := paymentHandler.CancelOrder(ctx context.Context,
 	contractAddresses common.Address,
 	gasPrice *big.Int,
 	orderID *big.Int,
