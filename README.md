@@ -18,8 +18,6 @@ import (
 
 #### Setup
 
-Init client for API services. Get APIKey/SecretKey from your binance account.
-
 ```golang
 var (
     rawRPCURL = "https://www.etherscan.io" // Can you testnet as well (https://www.ropsten.etherscan.io)
