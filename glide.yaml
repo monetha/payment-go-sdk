@@ -1,0 +1,10 @@
+package: github.com/monetha/payment-go-sdk
+import:
+- package: github.com/ethereum/go-ethereum
+  subpackages:
+  - accounts/abi
+  - accounts/abi/bind
+  - common
+  - core/types
+  - event
+- package: github.com/monetha/go-ethereum
