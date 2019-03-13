@@ -2,12 +2,12 @@ package paymenthandler
 
 import (
 	"crypto/ecdsa"
-	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/contracts/chequebook"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	ethereum "github.com/monetha/go-ethereum"
 	"github.com/monetha/go-ethereum/backend"
 )
 
@@ -30,17 +30,18 @@ type PaymentHandler struct {
 }
 
 // New creates an instance of ContractHandler which makes JSON-RPC calls.
-func New(rawRPCURL string, key *ecdsa.PrivateKey) (*PaymentHandler, error) {
-	if key == nil {
-		return nil, fmt.Errorf("non nil key expected")
+func New(rawRPCURL string, key string) (*PaymentHandler, error) {
+	processingKey, err := ethereum.NewKeyFromPrivateKey(key)
+	if err != nil {
+		return nil, err
 	}
 
 	cl, err := ethclient.Dial(rawRPCURL)
 	if err != nil {
-		return nil, fmt.Errorf("PaymentHandler: ethclient.Dial: %v", err)
+		return nil, err
 	}
 
-	return newWithBackend(cl, key), nil
+	return newWithBackend(cl, processingKey.PrivateKey), nil
 }
 
 // NewWithBackend creates a new ContractHandler instance with provided backend instead.
