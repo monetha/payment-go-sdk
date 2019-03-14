@@ -11,8 +11,8 @@ import (
 	"github.com/monetha/payment-go-sdk/contracts"
 )
 
-// AddOrder creates order in Ethereum storage with the given parameters. It's part of expensive flow.
-func (ch *PaymentHandler) AddOrder(ctx context.Context,
+// AddOrder creates order in Ethereum storage with the given parameters.
+func (ph *PaymentHandler) AddOrder(ctx context.Context,
 	contractAddresses common.Address,
 	gasPrice *big.Int,
 	orderID *big.Int,
@@ -22,7 +22,7 @@ func (ch *PaymentHandler) AddOrder(ctx context.Context,
 	fee *big.Int,
 	tokenAddress common.Address,
 	vouchersApplied *big.Int) (txHash string, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ch.backend)
+	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ph.backend)
 	if err != nil {
 		return
 	}
@@ -38,7 +38,7 @@ func (ch *PaymentHandler) AddOrder(ctx context.Context,
 	}
 
 	// using processing account key to call addOrder method
-	processingAuth := bind.NewKeyedTransactor(ch.key)
+	processingAuth := bind.NewKeyedTransactor(ph.key)
 	processingAuth.Context = ctx
 	processingAuth.GasPrice = gasPrice
 
@@ -53,17 +53,15 @@ func (ch *PaymentHandler) AddOrder(ctx context.Context,
 }
 
 // CancelOrder cancels the order. Canceling an order is only possible if securePay or payForOrder has not been called yet.
-func (ch *PaymentHandler) CancelOrder(
-	ctx context.Context,
+func (ph *PaymentHandler) CancelOrder(ctx context.Context,
 	contractAddresses common.Address,
 	gasPrice *big.Int,
 	orderID *big.Int,
 	clientReputation uint32,
 	merchantReputation uint32,
 	dealHash *big.Int,
-	cancelReason string,
-) (txHash string, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ch.backend)
+	cancelReason string) (txHash string, err error) {
+	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ph.backend)
 	if err != nil {
 		return
 	}
@@ -78,7 +76,7 @@ func (ch *PaymentHandler) CancelOrder(
 		return
 	}
 
-	processingAuth := bind.NewKeyedTransactor(ch.key)
+	processingAuth := bind.NewKeyedTransactor(ph.key)
 	processingAuth.Context = ctx
 	processingAuth.GasPrice = gasPrice
 
@@ -91,13 +89,13 @@ func (ch *PaymentHandler) CancelOrder(
 	return
 }
 
-// SecurePay makes secure payment from given wallet to payment processor contract. It's part of expensive flow.
-func (ch *PaymentHandler) SecurePay(ctx context.Context,
+// SecurePay makes secure payment from given wallet to payment processor contract.
+func (ph *PaymentHandler) SecurePay(ctx context.Context,
 	contractAddresses common.Address,
 	gasPrice *big.Int,
 	orderID *big.Int,
 	walletKey *ecdsa.PrivateKey) (txHash string, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ch.backend)
+	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ph.backend)
 	if err != nil {
 		return
 	}
@@ -126,14 +124,14 @@ func (ch *PaymentHandler) SecurePay(ctx context.Context,
 	return
 }
 
-// SecureTokenPay makes secure payment from given wallet to payment processor contract. It's part of expensive flow.
-func (ch *PaymentHandler) SecureTokenPay(ctx context.Context,
+// SecureTokenPay makes secure payment from given wallet to payment processor contract.
+func (ph *PaymentHandler) SecureTokenPay(ctx context.Context,
 	contractAddress, tokenAddress common.Address,
 	gasPrice *big.Int,
 	gasLimit *big.Int,
 	orderID *big.Int,
 	walletKey *ecdsa.PrivateKey) (txHash string, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddress, ch.backend)
+	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddress, ph.backend)
 	if err != nil {
 		return
 	}
@@ -165,15 +163,14 @@ func (ch *PaymentHandler) SecureTokenPay(ctx context.Context,
 }
 
 // ProcessPayment transfers funds to MonethaGateway, updates client/merchant reputation and completes the order.
-// It's part of expensive flow.
-func (ch *PaymentHandler) ProcessPayment(ctx context.Context,
+func (ph *PaymentHandler) ProcessPayment(ctx context.Context,
 	contractAddresses common.Address,
 	gasPrice *big.Int,
 	orderID *big.Int,
 	clientReputation uint32,
 	merchantReputation uint32,
 	dealHash *big.Int) (txHash string, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ch.backend)
+	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ph.backend)
 	if err != nil {
 		return
 	}
@@ -184,10 +181,11 @@ func (ch *PaymentHandler) ProcessPayment(ctx context.Context,
 	}
 
 	if order.State != orderStatePaid {
+		err = fmt.Errorf("PaymentHandler: wont'c call processPayment, order ID=%v state(%v) is not Paid", orderID, order.State)
 		return
 	}
 
-	processingAuth := bind.NewKeyedTransactor(ch.key)
+	processingAuth := bind.NewKeyedTransactor(ph.key)
 	processingAuth.Context = ctx
 	processingAuth.GasPrice = gasPrice
 
@@ -201,7 +199,7 @@ func (ch *PaymentHandler) ProcessPayment(ctx context.Context,
 }
 
 // RefundPayment calls refundPayment method that initiate process of funds refunding to the client.
-func (ch *PaymentHandler) RefundPayment(ctx context.Context,
+func (ph *PaymentHandler) RefundPayment(ctx context.Context,
 	contractAddresses common.Address,
 	gasPrice *big.Int,
 	orderID *big.Int,
@@ -209,12 +207,12 @@ func (ch *PaymentHandler) RefundPayment(ctx context.Context,
 	merchantReputation uint32,
 	dealHash *big.Int,
 	refundReason string) (txHash string, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ch.backend)
+	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ph.backend)
 	if err != nil {
 		return
 	}
 
-	processingAuth := bind.NewKeyedTransactor(ch.key)
+	processingAuth := bind.NewKeyedTransactor(ph.key)
 	processingAuth.Context = ctx
 	processingAuth.GasPrice = gasPrice
 
@@ -228,16 +226,16 @@ func (ch *PaymentHandler) RefundPayment(ctx context.Context,
 }
 
 // WithdrawRefund calls withdrawRefund method that performs fund transfer to the client's account.
-func (ch *PaymentHandler) WithdrawRefund(ctx context.Context,
+func (ph *PaymentHandler) WithdrawRefund(ctx context.Context,
 	contractAddresses common.Address,
 	gasPrice *big.Int,
 	orderID *big.Int) (txHash string, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ch.backend)
+	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ph.backend)
 	if err != nil {
 		return
 	}
 
-	processingAuth := bind.NewKeyedTransactor(ch.key)
+	processingAuth := bind.NewKeyedTransactor(ph.key)
 	processingAuth.Context = ctx
 	processingAuth.GasPrice = gasPrice
 
@@ -251,16 +249,16 @@ func (ch *PaymentHandler) WithdrawRefund(ctx context.Context,
 }
 
 // WithdrawTokenRefund calls withdrawRefund method that performs token fund transfer to the client's account.
-func (ch *PaymentHandler) WithdrawTokenRefund(ctx context.Context,
+func (ph *PaymentHandler) WithdrawTokenRefund(ctx context.Context,
 	contractAddresses common.Address,
 	gasPrice *big.Int,
 	orderID *big.Int) (txHash string, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ch.backend)
+	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(contractAddresses, ph.backend)
 	if err != nil {
 		return
 	}
 
-	processingAuth := bind.NewKeyedTransactor(ch.key)
+	processingAuth := bind.NewKeyedTransactor(ph.key)
 	processingAuth.Context = ctx
 	processingAuth.GasPrice = gasPrice
 

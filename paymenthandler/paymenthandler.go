@@ -16,10 +16,6 @@ const (
 	orderStateNull = iota
 	orderStateCreated
 	orderStatePaid
-	//orderStateFinalized
-	//orderStateRefunding
-	//orderStateRefunded
-	//orderStateCanceled
 )
 
 // PaymentHandler is an implementation for payment processors and merchant wallet.
@@ -29,7 +25,7 @@ type PaymentHandler struct {
 	address common.Address
 }
 
-// New creates an instance of ContractHandler which makes JSON-RPC calls.
+// New creates an instance of PaymentHandler which makes JSON-RPC calls.
 func New(rawRPCURL string, key string) (*PaymentHandler, error) {
 	processingKey, err := ethereum.NewKeyFromPrivateKey(key)
 	if err != nil {
@@ -44,7 +40,6 @@ func New(rawRPCURL string, key string) (*PaymentHandler, error) {
 	return newWithBackend(cl, processingKey.PrivateKey), nil
 }
 
-// NewWithBackend creates a new ContractHandler instance with provided backend instead.
 func newWithBackend(be chequebook.Backend, key *ecdsa.PrivateKey) *PaymentHandler {
 	// Wrap backend to have up to date nonce value (transactions count) for processing account.
 	address := crypto.PubkeyToAddress(key.PublicKey)
