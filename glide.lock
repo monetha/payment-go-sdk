@@ -1,5 +1,5 @@
-hash: 099aebd1a6a5ae5cc2a6249dca0899008f8a69f90fc6e71e35fce95e320872d0
-updated: 2019-03-13T15:26:10.10030462+05:30
+hash: 3f477591f0e721d549628b55b3550dcff86ff96c139208ea7fc7f041307a5eae
+updated: 2019-03-14T15:50:25.843952075+05:30
 imports:
 - name: github.com/allegro/bigcache
   version: 06975fd8de981b85f94a4e5bed7c32999030cef3
@@ -79,6 +79,10 @@ imports:
   - pbkdf2
   - scrypt
   - sha3
+- name: golang.org/x/lint
+  version: d0100b6bd8b389f0385611eb39152c4d7c3a7905
+  subpackages:
+  - golint
 - name: golang.org/x/net
   version: 10aee181995363b41f712a55844a0dd52ea04646
   subpackages:
@@ -87,6 +91,14 @@ imports:
   version: 904bdc257025c7b3f43c19360ad3ab85783fad78
   subpackages:
   - unix
+- name: golang.org/x/tools
+  version: 1286b2016bb195031cab5657d3244bc996b3f2dd
+  subpackages:
+  - cmd/goimports
 - name: gopkg.in/natefinch/npipe.v2
   version: c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6
+- name: honnef.co/go/tools
+  version: 466a0476246c45c74e011a03de704d72dc83da2d
+  subpackages:
+  - cmd/staticcheck
 testImports: []

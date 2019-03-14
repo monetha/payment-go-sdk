@@ -2,6 +2,18 @@
 
 A Golang SDK for monetha payment contracts.
 
+### Build
+
+Install dependencies:
+
+    make dependencies
+
+### Making changes
+
+Make your changes, then ensure that the linters pass:
+
+    make lint	
+
 ### Installation
 
 ```shell

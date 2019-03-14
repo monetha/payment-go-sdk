@@ -5,6 +5,20 @@ import:
   - accounts/abi
   - accounts/abi/bind
   - common
+  - contracts/chequebook
   - core/types
+  - crypto
+  - ethclient
   - event
 - package: github.com/monetha/go-ethereum
+  subpackages:
+  - backend
+- package: golang.org/x/lint
+  subpackages:
+  - golint
+- package: golang.org/x/tools
+  subpackages:
+  - cmd/goimports
+- package: honnef.co/go/tools
+  subpackages:
+  - cmd/staticcheck
