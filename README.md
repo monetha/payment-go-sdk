@@ -35,7 +35,7 @@ import (
 
 ```golang
 var (
-    rawRPCURL = "https://www.etherscan.io" // Can you testnet as well (https://www.ropsten.etherscan.io)
+    rawRPCURL = "https://www.infura.io" // Can you testnet as well (https://www.ropsten.infura.io)
     key = "your processing key"
 )
 paymentHandler := paymenthandler.New(rawRPCURL , key)
