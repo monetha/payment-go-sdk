@@ -33,7 +33,7 @@ func (ph *PaymentHandler) AddOrder(ctx context.Context,
 	}
 
 	if order.State != orderStateNull {
-		err = fmt.Errorf("PaymentHandler: wont'c call addOrder, order ID=%v state(%v) is not Null", orderID, order.State)
+		err = fmt.Errorf("PaymentHandler: won't call addOrder, order ID=%v state(%v) is not Null", orderID, order.State)
 		return
 	}
 
