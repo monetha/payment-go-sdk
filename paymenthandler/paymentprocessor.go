@@ -181,7 +181,7 @@ func (ph *PaymentHandler) ProcessPayment(ctx context.Context,
 	}
 
 	if order.State != orderStatePaid {
-		err = fmt.Errorf("PaymentHandler: wont'c call processPayment, order ID=%v state(%v) is not Paid", orderID, order.State)
+		err = fmt.Errorf("PaymentHandler: will not call processPayment, order ID=%v state(%v) is not Paid", orderID, order.State)
 		return
 	}
 
