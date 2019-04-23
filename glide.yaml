@@ -1,6 +1,7 @@
 package: github.com/monetha/payment-go-sdk
 import:
 - package: github.com/ethereum/go-ethereum
+  version: 1.8.27^
   subpackages:
   - accounts/abi
   - accounts/abi/bind

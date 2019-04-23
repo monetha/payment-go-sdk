@@ -16,7 +16,7 @@ A Golang SDK for decentralized Monetha Payment Gateway usage.
 			- [Formatting source code](#formatting-source-code)
 	- [Usage](#usage)
 		- [Installation & setup](#installation--setup)
-		- [Payment operations](#payment-operations)
+		- [Payment methods](#payment-methods)
 			- [AddOrder](#addorder)
 			- [CancelOrder](#cancelorder)
 			- [SecurePay](#securepay)
@@ -25,7 +25,7 @@ A Golang SDK for decentralized Monetha Payment Gateway usage.
 			- [RefundPayment](#refundpayment)
 			- [WithdrawRefund](#withdrawrefund)
 			- [WithdrawTokenRefund](#withdrawtokenrefund)
-		- [Merchant Wallet operations](#merchant-wallet-operations)
+		- [Merchant Wallet methods](#merchant-wallet-methods)
 			- [Withdraw](#withdraw)
 			- [WithdrawTo](#withdrawto)
 			- [WithdrawAllTo](#withdrawallto)
@@ -105,7 +105,7 @@ After package is installed import the package in your working file
 
 ```golang
 import (
-    "github.com/monetha/payment-go-sdk"
+    "github.com/monetha/payment-go-sdk/paymenthandler"
 )
 ```
 
@@ -118,7 +118,7 @@ paymentHandler := paymenthandler.New(EthereumRPCURL , PrivateKey)
 - `EthereumRPCURL` - Ethereum network node RPC url 
 - `PrivateKey` - user's private key who will be covering operational costs of transaction execution (Customer or Merchant).
 
-### Payment operations
+### Payment methods
 
 #### AddOrder
 
@@ -297,7 +297,7 @@ Parameters:
 - **gasPrice**
 - **orderID**
 
-### Merchant Wallet operations
+### Merchant Wallet methods
 
 MerchantWallet contract operations allowing a Merchant to manage collected funds
 
