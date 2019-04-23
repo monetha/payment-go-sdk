@@ -10,10 +10,11 @@ import (
 )
 
 // WithdrawToExchange withdraws specific amount to an exchange deposit address.
-func (ch *PaymentHandler) WithdrawToExchange(ctx context.Context,
+func (ch *PaymentSDK) WithdrawToExchange(ctx context.Context,
 	walletAddress common.Address,
 	depositAddress common.Address,
 	amount *big.Int) (txHash string, err error) {
+
 	merchantWallet, err := contracts.NewMerchantWalletContract(walletAddress, ch.backend)
 	if err != nil {
 		return
@@ -32,7 +33,7 @@ func (ch *PaymentHandler) WithdrawToExchange(ctx context.Context,
 }
 
 // WithdrawAllToExchange withdraws all balance to an exchange deposit address.
-func (ch *PaymentHandler) WithdrawAllToExchange(ctx context.Context,
+func (ch *PaymentSDK) WithdrawAllToExchange(ctx context.Context,
 	walletAddress common.Address,
 	depositAddress common.Address,
 	minAmount *big.Int) (txHash string, err error) {
@@ -54,7 +55,7 @@ func (ch *PaymentHandler) WithdrawAllToExchange(ctx context.Context,
 }
 
 // WithdrawAllTokensToExchange withdraws all token balance to an exchange deposit address.
-func (ch *PaymentHandler) WithdrawAllTokensToExchange(ctx context.Context,
+func (ch *PaymentSDK) WithdrawAllTokensToExchange(ctx context.Context,
 	tokenAddress common.Address,
 	walletAddress common.Address,
 	depositAddress common.Address,
