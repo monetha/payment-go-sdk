@@ -317,3 +317,6 @@ TBD
 #### WithdrawAllTokensTo
 
 TBD
+
+
+#### ChangeMerchantAddress
