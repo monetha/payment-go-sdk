@@ -28,7 +28,7 @@ func NewWallet(s *eth.Session, contractAddress common.Address) *Wallet {
 func (w *Wallet) WithdrawTo(ctx context.Context,
 	walletAddress common.Address,
 	depositAddress common.Address,
-	amount *big.Int) (txHash string, err error) {
+	amount *big.Int) (txHash common.Hash, err error) {
 
 	merchantWallet, err := contracts.NewMerchantWalletContract(walletAddress, w.Backend)
 	if err != nil {
@@ -40,7 +40,7 @@ func (w *Wallet) WithdrawTo(ctx context.Context,
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 }
 
@@ -48,7 +48,7 @@ func (w *Wallet) WithdrawTo(ctx context.Context,
 func (w *Wallet) WithdrawAllTo(ctx context.Context,
 	walletAddress common.Address,
 	depositAddress common.Address,
-	minAmount *big.Int) (txHash string, err error) {
+	minAmount *big.Int) (txHash common.Hash, err error) {
 	merchantWallet, err := contracts.NewMerchantWalletContract(walletAddress, w.Backend)
 	if err != nil {
 		return
@@ -59,7 +59,7 @@ func (w *Wallet) WithdrawAllTo(ctx context.Context,
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 }
 
@@ -68,7 +68,7 @@ func (w *Wallet) WithdrawAllTokensTo(ctx context.Context,
 	tokenAddress common.Address,
 	walletAddress common.Address,
 	depositAddress common.Address,
-	minAmount *big.Int) (txHash string, err error) {
+	minAmount *big.Int) (txHash common.Hash, err error) {
 	merchantWallet, err := contracts.NewMerchantWalletContract(walletAddress, w.Backend)
 	if err != nil {
 		return
@@ -79,7 +79,7 @@ func (w *Wallet) WithdrawAllTokensTo(ctx context.Context,
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 }
 

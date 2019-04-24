@@ -37,10 +37,9 @@ func NewProcessor(s *eth.Session, contractAddress common.Address) *Processor {
 func (p *Processor) AddOrder(ctx context.Context,
 	orderID *big.Int,
 	price *big.Int,
-	paymentAcceptor common.Address,
 	originAddress common.Address,
 	tokenAddress common.Address,
-	vouchersApplied *big.Int) (txHash string, err error) {
+	vouchersApplied *big.Int) (txHash common.Hash, err error) {
 
 	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
 	if err != nil {
@@ -60,12 +59,12 @@ func (p *Processor) AddOrder(ctx context.Context,
 	// TODO: calculate the fee of 1.5%
 	fee := big.NewInt(price.Int64() / 1000 * 15)
 
-	tx, err := paymentProcessorContract.AddOrder(&p.TransactOpts, orderID, price, paymentAcceptor, originAddress, fee, tokenAddress, vouchersApplied)
+	tx, err := paymentProcessorContract.AddOrder(&p.TransactOpts, orderID, price, originAddress, originAddress, fee, tokenAddress, vouchersApplied)
 	if err != nil {
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 
 }
@@ -77,7 +76,7 @@ func (p *Processor) CancelOrder(ctx context.Context,
 	clientReputation uint32,
 	merchantReputation uint32,
 	dealHash *big.Int,
-	cancelReason string) (txHash string, err error) {
+	cancelReason string) (txHash common.Hash, err error) {
 
 	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
 	if err != nil {
@@ -99,7 +98,7 @@ func (p *Processor) CancelOrder(ctx context.Context,
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 }
 
@@ -107,7 +106,7 @@ func (p *Processor) CancelOrder(ctx context.Context,
 func (p *Processor) SecurePay(ctx context.Context,
 	gasPrice *big.Int,
 	orderID *big.Int,
-	walletKey *ecdsa.PrivateKey) (txHash string, err error) {
+	walletKey *ecdsa.PrivateKey) (txHash common.Hash, err error) {
 	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
 	if err != nil {
 		return
@@ -134,7 +133,7 @@ func (p *Processor) SecurePay(ctx context.Context,
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 }
 
@@ -144,7 +143,7 @@ func (p *Processor) SecureTokenPay(ctx context.Context,
 	gasPrice *big.Int,
 	gasLimit *big.Int,
 	orderID *big.Int,
-	walletKey *ecdsa.PrivateKey) (txHash string, err error) {
+	walletKey *ecdsa.PrivateKey) (txHash common.Hash, err error) {
 	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
 	if err != nil {
 		return
@@ -173,7 +172,7 @@ func (p *Processor) SecureTokenPay(ctx context.Context,
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 }
 
@@ -183,7 +182,7 @@ func (p *Processor) ProcessPayment(ctx context.Context,
 	orderID *big.Int,
 	clientReputation uint32,
 	merchantReputation uint32,
-	dealHash *big.Int) (txHash string, err error) {
+	dealHash *big.Int) (txHash common.Hash, err error) {
 	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
 	if err != nil {
 		return
@@ -204,7 +203,7 @@ func (p *Processor) ProcessPayment(ctx context.Context,
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 }
 
@@ -215,7 +214,7 @@ func (p *Processor) RefundPayment(ctx context.Context,
 	clientReputation uint32,
 	merchantReputation uint32,
 	dealHash *big.Int,
-	refundReason string) (txHash string, err error) {
+	refundReason string) (txHash common.Hash, err error) {
 	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
 	if err != nil {
 		return
@@ -226,14 +225,14 @@ func (p *Processor) RefundPayment(ctx context.Context,
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 }
 
 // WithdrawRefund calls withdrawRefund method that performs fund transfer to the client's account.
 func (p *Processor) WithdrawRefund(ctx context.Context,
 	gasPrice *big.Int,
-	orderID *big.Int) (txHash string, err error) {
+	orderID *big.Int) (txHash common.Hash, err error) {
 	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
 	if err != nil {
 		return
@@ -244,14 +243,14 @@ func (p *Processor) WithdrawRefund(ctx context.Context,
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 }
 
 // WithdrawTokenRefund calls withdrawRefund method that performs token fund transfer to the client's account.
 func (p *Processor) WithdrawTokenRefund(ctx context.Context,
 	gasPrice *big.Int,
-	orderID *big.Int) (txHash string, err error) {
+	orderID *big.Int) (txHash common.Hash, err error) {
 	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
 	if err != nil {
 		return
@@ -262,6 +261,6 @@ func (p *Processor) WithdrawTokenRefund(ctx context.Context,
 		return
 	}
 
-	txHash = tx.Hash().Hex()
+	txHash = tx.Hash()
 	return
 }
