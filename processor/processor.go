@@ -2,33 +2,42 @@ package processor
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	eth "github.com/monetha/go-ethereum"
 	"github.com/monetha/payment-go-sdk/contracts"
 )
 
 var (
-	// ErrTemplate error returned when ...
-	ErrTemplate = errors.New("processor: template error message")
+	// ErrContractNotFound error returned when PaymentProcessorContract could not be instantiated on the given address
+	ErrContractNotFound = errors.New("processor: PaymentProcessorContract not found")
+	// ErrOrderStateNotNull error returned when Order's state is not Null
+	ErrOrderStateNotNull = errors.New("processor: can not execute addOrder order's state is not Null")
+	// ErrOrderNotCreated error returned when Order's state is not Created
+	ErrOrderNotCreated = errors.New("processor: could not execute SecurePay order's state is not Created")
+	//ErrAlwaysFailingTransaction error returned when Transaction could not be submitted to blockchain
+	ErrAlwaysFailingTransaction = errors.New("processor: could not submit a transaction. Gas limit exceeds limits or always failing transaction")
 )
 
 // Processor executes methods necessary for payment processing on chain
 type Processor struct {
 	*eth.Session
 	ContractAddress common.Address
+	ContractHandler *contracts.PaymentProcessorContract
 }
 
 // NewProcessor converts session to Processor
 func NewProcessor(s *eth.Session, contractAddress common.Address) *Processor {
+
+	paymentProcessorContract, _ := contracts.NewPaymentProcessorContract(contractAddress, s.Backend)
+
 	p := &Processor{
 		s,
 		contractAddress,
+		paymentProcessorContract,
 	}
 	return p
 }
@@ -41,9 +50,14 @@ func (p *Processor) AddOrder(ctx context.Context,
 	tokenAddress common.Address,
 	vouchersApplied *big.Int) (txHash common.Hash, err error) {
 
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
-	if err != nil {
-		return
+	var paymentProcessorContract = p.ContractHandler
+
+	if paymentProcessorContract == nil {
+		paymentProcessorContract, err = contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
+		if err != nil {
+			err = ErrContractNotFound
+			return
+		}
 	}
 
 	order, err := paymentProcessorContract.Orders(nil, orderID)
@@ -51,8 +65,8 @@ func (p *Processor) AddOrder(ctx context.Context,
 		return
 	}
 
-	if order.State != orderStateNull {
-		err = fmt.Errorf("processor: won't call addOrder, order ID=%v state(%v) is not Null", orderID, order.State)
+	if order.State != OrderStateNull {
+		err = ErrOrderStateNotNull
 		return
 	}
 
@@ -61,6 +75,7 @@ func (p *Processor) AddOrder(ctx context.Context,
 
 	tx, err := paymentProcessorContract.AddOrder(&p.TransactOpts, orderID, price, originAddress, originAddress, fee, tokenAddress, vouchersApplied)
 	if err != nil {
+		err = ErrAlwaysFailingTransaction
 		return
 	}
 
@@ -71,16 +86,20 @@ func (p *Processor) AddOrder(ctx context.Context,
 
 // CancelOrder cancels the order. Canceling an order is only possible if securePay or payForOrder has not been called yet.
 func (p *Processor) CancelOrder(ctx context.Context,
-	gasPrice *big.Int,
 	orderID *big.Int,
 	clientReputation uint32,
 	merchantReputation uint32,
 	dealHash *big.Int,
 	cancelReason string) (txHash common.Hash, err error) {
 
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
-	if err != nil {
-		return
+	var paymentProcessorContract = p.ContractHandler
+
+	if paymentProcessorContract == nil {
+		paymentProcessorContract, err = contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
+		if err != nil {
+			err = ErrContractNotFound
+			return
+		}
 	}
 
 	order, err := paymentProcessorContract.Orders(nil, orderID)
@@ -88,7 +107,7 @@ func (p *Processor) CancelOrder(ctx context.Context,
 		return
 	}
 
-	if order.State != orderStateCreated {
+	if order.State != OrderStateCreated {
 		err = fmt.Errorf("processor: won't call cancelOrder, order ID=%v state(%v) is not Created", orderID, order.State)
 		return
 	}
@@ -104,32 +123,35 @@ func (p *Processor) CancelOrder(ctx context.Context,
 
 // SecurePay makes secure payment from given wallet to payment processor contract.
 func (p *Processor) SecurePay(ctx context.Context,
-	gasPrice *big.Int,
-	orderID *big.Int,
-	walletKey *ecdsa.PrivateKey) (txHash common.Hash, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
-	if err != nil {
-		return
+	orderID, price *big.Int) (txHash common.Hash, err error) {
+
+	var paymentProcessorContract = p.ContractHandler
+
+	if paymentProcessorContract == nil {
+		paymentProcessorContract, err = contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
+		if err != nil {
+			err = ErrContractNotFound
+			return
+		}
 	}
+
+	// Set the fund value that will be transferred to a Contract
+	p.TransactOpts.Value = price
 
 	order, err := paymentProcessorContract.Orders(nil, orderID)
 	if err != nil {
+		err = fmt.Errorf("processor: %v", err)
 		return
 	}
 
-	if order.State != orderStateCreated {
-		err = fmt.Errorf("processor: could not call securePay, order ID=%v state(%v) is not Created", orderID, order.State)
+	if order.State != OrderStateCreated {
+		err = ErrOrderNotCreated
 		return
 	}
 
-	// TODO: remove wallet_key reference. KeyedTransactor comes from backend
-	walletAuth := bind.NewKeyedTransactor(walletKey)
-	walletAuth.Context = ctx
-	walletAuth.Value = order.Price
-	walletAuth.GasPrice = gasPrice
-
-	tx, err := paymentProcessorContract.SecurePay(walletAuth, orderID)
+	tx, err := paymentProcessorContract.SecurePay(&p.TransactOpts, orderID)
 	if err != nil {
+		err = ErrAlwaysFailingTransaction
 		return
 	}
 
@@ -140,13 +162,16 @@ func (p *Processor) SecurePay(ctx context.Context,
 // SecureTokenPay makes secure payment from given wallet to payment processor contract.
 func (p *Processor) SecureTokenPay(ctx context.Context,
 	tokenAddress common.Address,
-	gasPrice *big.Int,
 	gasLimit *big.Int,
-	orderID *big.Int,
-	walletKey *ecdsa.PrivateKey) (txHash common.Hash, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
-	if err != nil {
-		return
+	orderID *big.Int) (txHash common.Hash, err error) {
+	var paymentProcessorContract = p.ContractHandler
+
+	if paymentProcessorContract == nil {
+		paymentProcessorContract, err = contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
+		if err != nil {
+			err = ErrContractNotFound
+			return
+		}
 	}
 
 	order, err := paymentProcessorContract.Orders(nil, orderID)
@@ -154,20 +179,12 @@ func (p *Processor) SecureTokenPay(ctx context.Context,
 		return
 	}
 
-	if order.State != orderStateCreated {
+	if order.State != OrderStateCreated {
 		err = fmt.Errorf("processor: could not call secureTokenPay, order ID=%v state(%v) is not Created", orderID, order.State)
 		return
 	}
 
-	// TODO: remove wallet_key reference. KeyedTransactor comes from backend
-	walletAuth := bind.NewKeyedTransactor(walletKey)
-
-	walletAuth.Value = big.NewInt(0)
-	walletAuth.Context = ctx
-	walletAuth.GasPrice = gasPrice
-	walletAuth.GasLimit = gasLimit.Uint64()
-
-	tx, err := paymentProcessorContract.SecureTokenPay(walletAuth, orderID)
+	tx, err := paymentProcessorContract.SecureTokenPay(&p.TransactOpts, orderID)
 	if err != nil {
 		return
 	}
@@ -178,14 +195,16 @@ func (p *Processor) SecureTokenPay(ctx context.Context,
 
 // ProcessPayment transfers funds to MonethaGateway, updates client/merchant reputation and completes the order.
 func (p *Processor) ProcessPayment(ctx context.Context,
-	gasPrice *big.Int,
 	orderID *big.Int,
-	clientReputation uint32,
-	merchantReputation uint32,
 	dealHash *big.Int) (txHash common.Hash, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
-	if err != nil {
-		return
+	var paymentProcessorContract = p.ContractHandler
+
+	if paymentProcessorContract == nil {
+		paymentProcessorContract, err = contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
+		if err != nil {
+			err = ErrContractNotFound
+			return
+		}
 	}
 
 	order, err := paymentProcessorContract.Orders(nil, orderID)
@@ -193,12 +212,12 @@ func (p *Processor) ProcessPayment(ctx context.Context,
 		return
 	}
 
-	if order.State != orderStatePaid {
+	if order.State != OrderStatePaid {
 		err = fmt.Errorf("processor: will not call processPayment, order ID=%v state(%v) is not Paid", orderID, order.State)
 		return
 	}
 
-	tx, err := paymentProcessorContract.ProcessPayment(&p.TransactOpts, orderID, clientReputation, merchantReputation, dealHash)
+	tx, err := paymentProcessorContract.ProcessPayment(&p.TransactOpts, orderID, 0, 0, dealHash)
 	if err != nil {
 		return
 	}
@@ -209,15 +228,19 @@ func (p *Processor) ProcessPayment(ctx context.Context,
 
 // RefundPayment calls refundPayment method that initiate process of funds refunding to the client.
 func (p *Processor) RefundPayment(ctx context.Context,
-	gasPrice *big.Int,
 	orderID *big.Int,
 	clientReputation uint32,
 	merchantReputation uint32,
 	dealHash *big.Int,
 	refundReason string) (txHash common.Hash, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
-	if err != nil {
-		return
+	var paymentProcessorContract = p.ContractHandler
+
+	if paymentProcessorContract == nil {
+		paymentProcessorContract, err = contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
+		if err != nil {
+			err = ErrContractNotFound
+			return
+		}
 	}
 
 	tx, err := paymentProcessorContract.RefundPayment(&p.TransactOpts, orderID, clientReputation, merchantReputation, dealHash, refundReason)
@@ -231,11 +254,15 @@ func (p *Processor) RefundPayment(ctx context.Context,
 
 // WithdrawRefund calls withdrawRefund method that performs fund transfer to the client's account.
 func (p *Processor) WithdrawRefund(ctx context.Context,
-	gasPrice *big.Int,
 	orderID *big.Int) (txHash common.Hash, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
-	if err != nil {
-		return
+	var paymentProcessorContract = p.ContractHandler
+
+	if paymentProcessorContract == nil {
+		paymentProcessorContract, err = contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
+		if err != nil {
+			err = ErrContractNotFound
+			return
+		}
 	}
 
 	tx, err := paymentProcessorContract.WithdrawRefund(&p.TransactOpts, orderID)
@@ -249,11 +276,15 @@ func (p *Processor) WithdrawRefund(ctx context.Context,
 
 // WithdrawTokenRefund calls withdrawRefund method that performs token fund transfer to the client's account.
 func (p *Processor) WithdrawTokenRefund(ctx context.Context,
-	gasPrice *big.Int,
 	orderID *big.Int) (txHash common.Hash, err error) {
-	paymentProcessorContract, err := contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
-	if err != nil {
-		return
+	var paymentProcessorContract = p.ContractHandler
+
+	if paymentProcessorContract == nil {
+		paymentProcessorContract, err = contracts.NewPaymentProcessorContract(p.ContractAddress, p.Backend)
+		if err != nil {
+			err = ErrContractNotFound
+			return
+		}
 	}
 
 	tx, err := paymentProcessorContract.WithdrawTokenRefund(&p.TransactOpts, orderID)
