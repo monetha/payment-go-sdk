@@ -41,14 +41,10 @@ func NewWallet(s *eth.Session, contractAddress common.Address) *Wallet {
 func (w *Wallet) WithdrawTo(ctx context.Context,
 	depositAddress common.Address,
 	amount *big.Int) (txHash common.Hash, err error) {
-	var merchantWallet = w.ContractHandler
 
-	if merchantWallet == nil {
-		merchantWallet, err = contracts.NewMerchantWalletContract(w.ContractAddress, w.Backend)
-		if err != nil {
-			err = ErrContractNotFound
-			return
-		}
+	merchantWallet, err := w.initMerchantWalletContract()
+	if err != nil {
+		return err
 	}
 
 	tx, err := merchantWallet.WithdrawToExchange(&w.TransactOpts, depositAddress, amount)
@@ -65,14 +61,10 @@ func (w *Wallet) WithdrawTo(ctx context.Context,
 func (w *Wallet) WithdrawAllTo(ctx context.Context,
 	depositAddress common.Address,
 	minAmount *big.Int) (txHash common.Hash, err error) {
-	var merchantWallet = w.ContractHandler
 
-	if merchantWallet == nil {
-		merchantWallet, err = contracts.NewMerchantWalletContract(w.ContractAddress, w.Backend)
-		if err != nil {
-			err = ErrContractNotFound
-			return
-		}
+	merchantWallet, err := w.initMerchantWalletContract()
+	if err != nil {
+		return err
 	}
 
 	tx, err := merchantWallet.WithdrawAllToExchange(&w.TransactOpts, depositAddress, minAmount)
@@ -90,14 +82,10 @@ func (w *Wallet) WithdrawAllTokensTo(ctx context.Context,
 	tokenAddress common.Address,
 	depositAddress common.Address,
 	minAmount *big.Int) (txHash common.Hash, err error) {
-	var merchantWallet = w.ContractHandler
 
-	if merchantWallet == nil {
-		merchantWallet, err = contracts.NewMerchantWalletContract(w.ContractAddress, w.Backend)
-		if err != nil {
-			err = ErrContractNotFound
-			return
-		}
+	merchantWallet, err := w.initMerchantWalletContract()
+	if err != nil {
+		return err
 	}
 
 	tx, err := merchantWallet.WithdrawAllTokensToExchange(&w.TransactOpts, tokenAddress, depositAddress, minAmount)
@@ -110,4 +98,35 @@ func (w *Wallet) WithdrawAllTokensTo(ctx context.Context,
 	return
 }
 
-// TODO: add `changeMerchantAccount`
+// ChangeMerchant passes the administration of the MerchantWallet contract to another Address
+func (w *Wallet) ChangeMerchant(ctx context.Context,
+	to common.Address) (txHash common.Hash, err error) {
+
+	merchantWallet, err := w.initMerchantWalletContract()
+	if err != nil {
+		return err
+	}
+
+
+	tx, err := merchantWallet.ChangeMerchantAccount(&w.TransactOpts, to)
+	if err != nil {
+		err = ErrAlwaysFailingTransaction
+		return
+	}
+
+	txHash = tx.Hash()
+	return
+}
+
+func (w *Wallet) initMerchantWalletContract() (merchantWallet *contracts.MerchantWalletContract, err error) {
+	merchantWallet = w.ContractHandler
+
+	if merchantWallet == nil {
+		merchantWallet, err = contracts.NewMerchantWalletContract(w.ContractAddress, w.Backend)
+		if err != nil {
+			err = ErrContractNotFound
+			return
+		}
+	}
+	return
+}
