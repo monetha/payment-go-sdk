@@ -1,0 +1,63 @@
+@startuml
+
+class Session <<github.com/monetha/go-ethereum>> {
+
+}
+
+package processor {
+
+    class Processor {
+        +ContractAddress common.Address
+        +ContractHandler *contracts.PaymentProcessorContract
+        --
+        +NewProcessor(s *eth.Session, contractAddress common.Address) *Processor
+        +AddOrder(ctx context.Context, orderID *big.Int, price *big.Int, originAddress common.Address, tokenAddress common.Address, vouchersApplied *big.Int) (txHash common.Hash, err error)
+        +CancelOrder(ctx context.Context, orderID *big.Int, dealHash *big.Int, cancelReason string) (txHash common.Hash, err error)
+        +SecurePay(ctx context.Context, orderID, price *big.Int) (txHash common.Hash, err error)
+        +SecureTokenPay(ctx context.Context, tokenAddress common.Address, gasLimit *big.Int, orderID *big.Int)
+        +ProcessPayment(ctx context.Context, orderID *big.Int, dealHash *big.Int) (txHash common.Hash, err error)
+        +RefundPayment(ctx context.Context, orderID *big.Int, dealHash *big.Int, refundReason string) (txHash common.Hash, err error)
+        +WithdrawRefund(ctx context.Context, orderID *big.Int) (txHash common.Hash, err error)
+        +WithdrawTokenRefund(ctx context.Context, orderID *big.Int) (txHash common.Hash, err error)
+        ===
+        -initPaymentProcessorContract() (paymentProcessorContract *contracts.PaymentProcessorContract, err error)
+    }
+
+}
+
+package wallet {
+
+    class Wallet {
+        +ContractAddress common.Address
+        +ContractHandler *contracts.MerchantWallet
+        --
+        +NewWallet(s *eth.Session, contractAddress common.Address) *Wallet
+        +WithdrawTo(ctx context.Context, depositAddress common.Address, amount *big.Int) (txHash common.Hash, err error)
+        +WithdrawAllTo(ctx context.Context, depositAddress common.Address, minAmount *big.Int) (txHash common.Hash, err error) 
+        +WithdrawAllTokensTo(ctx context.Context, tokenAddress common.Address, depositAddress common.Address, minAmount *big.Int) (txHash common.Hash, err error)
+        +ChangeMerchant(ctx context.Context, to common.Address) (txHash common.Hash, err error)
+        ===
+        -initMerchantWalletContract() (merchantWallet *contracts.MerchantWalletContract, err error)
+    }
+
+}
+
+package contracts {
+    class MerchantWalletContract <<generated from abi, bin artifacts>> {
+
+    }
+
+    class PaymentProcessorContract <<generated from abi, bin artifacts>> {
+
+    }
+}
+
+Wallet <|-- MerchantWalletContract
+Processor <|-- PaymentProcessorContract
+
+Session *-- Processor
+Session *-- Wallet
+
+
+
+@enduml

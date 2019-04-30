@@ -81,8 +81,6 @@ func (p *Processor) AddOrder(ctx context.Context,
 // CancelOrder cancels the order. Canceling an order is possible only if Order was not paid yet
 func (p *Processor) CancelOrder(ctx context.Context,
 	orderID *big.Int,
-	clientReputation uint32,
-	merchantReputation uint32,
 	dealHash *big.Int,
 	cancelReason string) (txHash common.Hash, err error) {
 
@@ -101,7 +99,7 @@ func (p *Processor) CancelOrder(ctx context.Context,
 		return
 	}
 
-	tx, err := paymentProcessorContract.CancelOrder(&p.TransactOpts, orderID, clientReputation, merchantReputation, dealHash, cancelReason)
+	tx, err := paymentProcessorContract.CancelOrder(&p.TransactOpts, orderID, 0, 0, dealHash, cancelReason)
 	if err != nil {
 		return
 	}
