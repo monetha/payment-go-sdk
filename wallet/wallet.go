@@ -37,7 +37,7 @@ func NewWallet(s *eth.Session, contractAddress common.Address) *Wallet {
 	return p
 }
 
-// WithdrawTo withdraws specific amount to an exchange deposit address.
+// WithdrawTo withdraws specific amount to a provided deposit address
 func (w *Wallet) WithdrawTo(ctx context.Context,
 	depositAddress common.Address,
 	amount *big.Int) (txHash common.Hash, err error) {
@@ -57,7 +57,7 @@ func (w *Wallet) WithdrawTo(ctx context.Context,
 	return
 }
 
-// WithdrawAllTo withdraws all balance to an exchange deposit address.
+// WithdrawAllTo withdraws all balance or minAmount to a provided deposit address
 func (w *Wallet) WithdrawAllTo(ctx context.Context,
 	depositAddress common.Address,
 	minAmount *big.Int) (txHash common.Hash, err error) {
@@ -77,7 +77,7 @@ func (w *Wallet) WithdrawAllTo(ctx context.Context,
 	return
 }
 
-// WithdrawAllTokensTo withdraws all token balance to an exchange deposit address.
+// WithdrawAllTokensTo withdraws all token balance or minAmount to a provided deposit address.
 func (w *Wallet) WithdrawAllTokensTo(ctx context.Context,
 	tokenAddress common.Address,
 	depositAddress common.Address,
