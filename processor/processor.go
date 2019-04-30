@@ -78,7 +78,7 @@ func (p *Processor) AddOrder(ctx context.Context,
 
 }
 
-// CancelOrder cancels the order. Canceling an order is possible only if Order was not paid yet.
+// CancelOrder cancels the order. Canceling an order is possible only if Order was not paid yet
 func (p *Processor) CancelOrder(ctx context.Context,
 	orderID *big.Int,
 	clientReputation uint32,
@@ -110,7 +110,7 @@ func (p *Processor) CancelOrder(ctx context.Context,
 	return
 }
 
-// SecurePay makes a secure transfer of funds from Customer's address to PaymentProcessor contract.
+// SecurePay makes a secure transfer of funds from Customer's address to PaymentProcessor contract
 func (p *Processor) SecurePay(ctx context.Context,
 	orderID,
 	price *big.Int) (txHash common.Hash, err error) {
@@ -144,7 +144,7 @@ func (p *Processor) SecurePay(ctx context.Context,
 	return
 }
 
-// SecureTokenPay makes a secure transfer of ERC20 funds from Customer's address to PaymentProcessor contract.
+// SecureTokenPay makes a secure transfer of ERC20 funds from Customer's address to PaymentProcessor contract
 func (p *Processor) SecureTokenPay(ctx context.Context,
 	tokenAddress common.Address,
 	gasLimit *big.Int,
@@ -174,7 +174,7 @@ func (p *Processor) SecureTokenPay(ctx context.Context,
 	return
 }
 
-// ProcessPayment unlocks funds from the contract and transfers them to MerchantWallet.
+// ProcessPayment unlocks funds from the contract and transfers them to MerchantWallet
 func (p *Processor) ProcessPayment(ctx context.Context,
 	orderID *big.Int,
 	dealHash *big.Int) (txHash common.Hash, err error) {
@@ -204,11 +204,9 @@ func (p *Processor) ProcessPayment(ctx context.Context,
 	return
 }
 
-// RefundPayment calls refundPayment method that initiate process of funds refunding to the client.
+// RefundPayment initiates process of refund for particular Order.
 func (p *Processor) RefundPayment(ctx context.Context,
 	orderID *big.Int,
-	clientReputation uint32,
-	merchantReputation uint32,
 	dealHash *big.Int,
 	refundReason string) (txHash common.Hash, err error) {
 
@@ -217,7 +215,7 @@ func (p *Processor) RefundPayment(ctx context.Context,
 		return
 	}
 
-	tx, err := paymentProcessorContract.RefundPayment(&p.TransactOpts, orderID, clientReputation, merchantReputation, dealHash, refundReason)
+	tx, err := paymentProcessorContract.RefundPayment(&p.TransactOpts, orderID, 0, 0, dealHash, refundReason)
 	if err != nil {
 		return
 	}
@@ -226,7 +224,7 @@ func (p *Processor) RefundPayment(ctx context.Context,
 	return
 }
 
-// WithdrawRefund calls withdrawRefund method that performs fund transfer to the client's account.
+// WithdrawRefund transfers funds equal to Order.price back to an address from which SecurePay was executed
 func (p *Processor) WithdrawRefund(ctx context.Context,
 	orderID *big.Int) (txHash common.Hash, err error) {
 
@@ -244,7 +242,7 @@ func (p *Processor) WithdrawRefund(ctx context.Context,
 	return
 }
 
-// WithdrawTokenRefund calls withdrawRefund method that performs token fund transfer to the client's account.
+// WithdrawTokenRefund transfers funds equal to Order.price back to an address from which SecureTokenPay was executed
 func (p *Processor) WithdrawTokenRefund(ctx context.Context,
 	orderID *big.Int) (txHash common.Hash, err error) {
 
