@@ -1,35 +1,19 @@
-# Monetha: Decentralized Reputation Framework
+# Monetha: Decentralized Reputation Framework <!-- omit in toc -->
 
-## Payment Layer: go-sdk 
+## Payment Layer: go-sdk <!-- omit in toc -->
 [![GoDoc](https://godoc.org/github.com/monetha/payment-go-sdk?status.svg)](https://godoc.org/github.com/monetha/payment-go-sdk)
 
 A Golang SDK for decentralized Monetha Payment Gateway usage.
 
-- [Monetha: Decentralized Reputation Framework](#monetha-decentralized-reputation-framework)
-	- [Payment Layer: go-sdk](#payment-layer-go-sdk)
-	- [Building the source](#building-the-source)
-		- [Prerequisites](#prerequisites)
-		- [Build](#build)
-	- [Contributing](#contributing)
-		- [Making changes](#making-changes)
-			- [Contracts update](#contracts-update)
-			- [Formatting source code](#formatting-source-code)
-	- [Usage](#usage)
-		- [Installation & setup](#installation--setup)
-		- [Payment methods](#payment-methods)
-			- [AddOrder](#addorder)
-			- [CancelOrder](#cancelorder)
-			- [SecurePay](#securepay)
-			- [SecureTokenPay](#securetokenpay)
-			- [ProcessPayment](#processpayment)
-			- [RefundPayment](#refundpayment)
-			- [WithdrawRefund](#withdrawrefund)
-			- [WithdrawTokenRefund](#withdrawtokenrefund)
-		- [Merchant Wallet methods](#merchant-wallet-methods)
-			- [Withdraw](#withdraw)
-			- [WithdrawTo](#withdrawto)
-			- [WithdrawAllTo](#withdrawallto)
-			- [WithdrawAllTokensTo](#withdrawalltokensto)
+- [Building the source](#building-the-source)
+	- [Prerequisites](#prerequisites)
+	- [Build](#build)
+- [Usage](#usage)
+	- [Installation & setup](#installation--setup)
+- [Contributing](#contributing)
+	- [Making changes](#making-changes)
+		- [Contracts update](#contracts-update)
+		- [Formatting source code](#formatting-source-code)
 
 ## Building the source
 
@@ -65,13 +49,77 @@ Install dependencies:
     make dependencies
 ```
 
+## Usage
+
+In order to better understand the use cases of the `payment-go-sdk` please refer to [Monetha Payment layer: de-centralized  usage scenarios](https://github.com/monetha/payment-layer#de-centralized-payment-layer-usage-scenarios). There are as well several code sample on how payment-go-sdk can be used in order to complete a full payment by Customer and Merchant which can be found [here](https://github.com/monetha/examples-payment)
+
+### Installation & setup
+
+Install new dependency from you project's folder
+
+```bash
+go get github.com/monetha/payment-go-sdk
+```
+
+After package is installed import the package in your working file
+
+```golang
+import (
+    "github.com/ethereum/go-ethereum"
+    eth "github.com/mometha/go-ethereum"
+    "github.com/monetha/payment-go-sdk/processor"
+    "github.com/monetha/payment-go-sdk/wallet"
+)
+```
+
+Initializing `processor` and `wallet`
+
+```golang
+
+backend, err := ethclient.Dial("ETHEREUM_RPC_URL")
+if err != nil {
+    // Handle the error
+}
+
+e := eth.New(backend, log.Printf)
+
+merchantAccount, err := crypto.HexToECDSA("MERCHANT_PRIVATE_KEY")
+if err != nil {
+   // Handle the error
+}
+
+session = e.NewSession(merchantAccount)
+
+processorContractAddress := common.HexToAddress("PAYMENT_PROCESSOR_CONTRACT_ADDRESS")
+
+processor := processor.NewProcessor(session , processorContractAddress)
+
+walletAddress := common.HexToAddress("MERCHANT_WALLET_ADDRESS")
+
+wallet := wallet.NewWallet(session, walletAddress)
+```
+
+- `ETHEREUM_RPC_URL` - Ethereum network node RPC url 
+- `MERCHANT_PRIVATE_KEY` - Merchant's Ehereum private key. This address will be covering operational costs
+- `PAYMENT_PROCESSOR_CONTRACT_ADDRESS` - PaymentProcessor contract address that is provided by Monetha
+- `MERCHANT_WALLET_ADDRESS` - MerchantWallet contract address that is provided by Monetha
+
+**Note**: Currently all PaymentProcessor and MerchantWallet contract instances are provided by Monetha. Contact [team@monetha.io](mailto:team@monetha.io) in case if you would like to have your own instance deployed.
+
+After the following code is initialized you are ready to execute all `processor` and `wallet` methods. All methods will be executed by Merchant's account.
+
+More information on methods available can be found in [godocs](https://godoc.org/github.com/monetha/payment-go-sdk)
+
+![UML](docs/diagrams/out/uml.png)
+
+
 ## Contributing
 
-Thank you for considering to help out with the source code! We welcome contributions from anyone on the internet, and are grateful for even the smallest of fixes! If you'd like to contribute to payment-go-sdk, please fork, fix, commit and send a pull request for the maintainers to review and merge into the main code base.  Feel free to register issues and suggestions 
+Thank you for considering to help out with the source code! We welcome contributions from anyone on the internet, and are grateful for even the smallest of fixes! If you'd like to contribute to `payment-go-sdk`, please fork, fix, commit and send a pull request for the maintainers to review and merge into the main code base.  Feel free to register issues and suggestions.
 
 ### Making changes
 
-Make your changes, then ensure that the linters pass:
+Make your changes, then ensure that the linters passes:
 
 ```bash
     make lint
@@ -89,234 +137,3 @@ This SDK is dependent on [Monetha's payment layer smart contracts](https://githu
 
 `make fmt` command automatically formats Go source code of the entire project.
 
-## Usage
-
-In order to better understand the use cases of the `payment-go-sdk` please refer to [Monetha Payment layer: de-centralized  usage scenarios](https://github.com/monetha/payment-layer#de-centralized-payment-layer-usage-scenarios)
-
-### Installation & setup
-
-Install new dependency from you project's folder
-
-```bash
-go get github.com/monetha/payment-go-sdk
-```
-
-After package is installed import the package in your working file
-
-```golang
-import (
-    "github.com/monetha/payment-go-sdk/paymenthandler"
-)
-```
-
-Initialize paymentHandler by providing 2 parameters
-
-```golang
-paymentHandler := paymenthandler.New(EthereumRPCURL , PrivateKey)
-```
-
-- `EthereumRPCURL` - Ethereum network node RPC url 
-- `PrivateKey` - user's private key who will be covering operational costs of transaction execution (Customer or Merchant).
-
-### Payment methods
-
-#### AddOrder
-
-This method can be executed by either Merchant or a Customer. This method initializes the deal between 2 parties Merchant and Customer.
-
-```golang
-txHash, err := paymentHandler.AddOrder(ctx context.Context,
-	contractAddresses common.Address,
-	gasPrice *big.Int,
-	orderID *big.Int,
-	price *big.Int,
-	paymentAcceptor common.Address,
-	originAddress common.Address,
-	fee *big.Int,
-	tokenAddress common.Address,
-	vouchersApplied *big.Int)
-if err != nil {
-    // error handling
-}
-// Use txHash for further operations.
-```
-
-Parameters:
-
-- **ctx**
-- **contractAddresses**
-- **gasPrice**
-- **orderID**
-- **price**
-- **paymentAcceptor**
-- **originAddress**
-- **fee**
-- **tokenAddress**
-- **vouchersApplied**
-
-#### CancelOrder
-
-```golang
-txHash, err := paymentHandler.CancelOrder(ctx context.Context,
-	contractAddresses common.Address,
-	gasPrice *big.Int,
-	orderID *big.Int,
-	clientReputation uint32,
-	merchantReputation uint32,
-	dealHash *big.Int,
-	cancelReason string)
-if err != nil {
-    // error handling
-}
-// Use txHash for further operations.
-```
-
-Parameters:
-
-- **ctx**
-- **contractAddresses**
-- **gasPrice**
-- **orderID**
-- **clientReputation**
-- **merchantReputation**
-- **dealHash**
-- **cancelReason**
-
-#### SecurePay
-
-```golang
-txHash, err := paymentHandler.SecurePay(ctx context.Context,
-	contractAddresses common.Address,
-	gasPrice *big.Int,
-	orderID *big.Int,
-	walletKey *ecdsa.PrivateKey)
-if err != nil {
-    // error handling
-}
-// Use txHash for further operations.
-```
-
-Parameters:
-
-- **ctx**
-- **contractAddresses**
-- **gasPrice**
-- **orderID**
-- **walletKey**
-
-#### SecureTokenPay
-
-```golang
-txHash, err := paymentHandler.SecureTokenPay(ctx context.Context,
-	contractAddress, tokenAddress common.Address,
-	gasPrice *big.Int,
-	gasLimit *big.Int,
-	orderID *big.Int,
-	walletKey *ecdsa.PrivateKey)
-if err != nil {
-    // error handling
-}
-// Use txHash for further operations.
-```
-
-Parameters:
-
-- **ctx**
-- **contractAddresses**
-- **gasPrice**
-- **orderID**
-- **walletKey**
-
-#### ProcessPayment
-
-```golang
-txHash, err := paymentHandler.ProcessPayment(ctx context.Context,
-	contractAddresses common.Address,
-	gasPrice *big.Int,
-	orderID *big.Int,
-	clientReputation uint32,
-	merchantReputation uint32,
-	dealHash *big.Int)
-if err != nil {
-    // error handling
-}
-// Use txHash for further operations.
-```
-
-Parameters:
-
-- **ctx**
-- **contractAddresses**
-- **gasPrice**
-- **orderID**
-- **clientReputation**
-- **merchantReputation**
-- **dealHash**
-
-#### RefundPayment
-
-TBD
-
-#### WithdrawRefund
-
-```golang
-txHash, err := paymentHandler.WithdrawRefund(ctx context.Context,
-	contractAddresses common.Address,
-	gasPrice *big.Int,
-	orderID *big.Int)
-if err != nil {
-    // error handling
-}
-// Use txHash for further operations.
-```
-
-Parameters:
-
-- **ctx**
-- **contractAddresses**
-- **gasPrice**
-- **orderID**
-
-#### WithdrawTokenRefund
-
-```golang
-txHash, err := paymentHandler.WithdrawTokenRefund(ctx context.Context,
-	contractAddresses common.Address,
-	gasPrice *big.Int,
-	orderID *big.Int)
-if err != nil {
-    // error handling
-}
-// Use txHash for further operations.
-```
-
-Parameters:
-
-- **ctx**
-- **contractAddresses**
-- **gasPrice**
-- **orderID**
-
-### Merchant Wallet methods
-
-MerchantWallet contract operations allowing a Merchant to manage collected funds
-
-#### Withdraw
-
-TBD
-
-#### WithdrawTo
-
-TBD
-
-#### WithdrawAllTo
-
-TBD
-
-
-#### WithdrawAllTokensTo
-
-TBD
-
-
-#### ChangeMerchantAddress
