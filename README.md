@@ -35,8 +35,8 @@ cd payment-go-sdk
 
 ```bash
 docker run -it --rm \
-  -v "$PWD":/go/src/github.com/monetha/reputation-go-sdk \
-  -w /go/src/github.com/monetha/reputation-go-sdk \
+  -v "$PWD":/go/src/github.com/monetha/payment-go-sdk \
+  -w /go/src/github.com/monetha/payment-go-sdk \
   golang:1.12 \
   /bin/bash
 ```
